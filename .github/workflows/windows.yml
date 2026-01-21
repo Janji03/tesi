@@ -18,8 +18,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup CMake
+      - name: Setup CMake (pinned)
         uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.29.8"
 
       - name: Clone vcpkg
         shell: pwsh
@@ -42,6 +44,7 @@ jobs:
         run: |
           $jarPath = Join-Path $env:GITHUB_WORKSPACE "antlr-4.13.2-complete.jar"
           $toolchain = Join-Path $env:GITHUB_WORKSPACE "vcpkg\scripts\buildsystems\vcpkg.cmake"
+
           cmake -S toy-choreo -B build/ci-debug `
             -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="$toolchain" `
@@ -57,10 +60,13 @@ jobs:
         shell: pwsh
         run: |
           ctest --test-dir build/ci-debug -C Debug --output-on-failure
-      - name: Dump vcpkg logs on failure
+
+      - name: Dump vcpkg antlr4 logs on failure
         if: failure()
         shell: pwsh
         run: |
-          Get-ChildItem -Recurse -ErrorAction SilentlyContinue vcpkg\buildtrees\antlr4 | Select-Object FullName
-          Write-Host "---- install-x64-windows-dbg-out.log ----"
-          Get-Content -ErrorAction SilentlyContinue vcpkg\buildtrees\antlr4\install-x64-windows-dbg-out.log -Tail 200
+          Write-Host "---- vcpkg issue_body.md (tail) ----"
+          Get-Content -ErrorAction SilentlyContinue build/ci-debug/vcpkg_installed/vcpkg/issue_body.md -Tail 200
+
+          Write-Host "---- antlr4 install-x64-windows-dbg-out.log (tail) ----"
+          Get-Content -ErrorAction SilentlyContinue vcpkg/buildtrees/antlr4/install-x64-windows-dbg-out.log -Tail 200
