@@ -28,23 +28,23 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: "d3f79b0d0cbd15a4c68dc8d2acb4b0d4a5c1f0c2"
-          # Se questo commit dovesse diventare vecchio in futuro, lo cambierai.
-          # È qui per stabilità e caching.
 
       - name: Download ANTLR jar
         shell: pwsh
         run: |
           $jar = "antlr-4.13.2-complete.jar"
-          Invoke-WebRequest -Uri "https://www.antlr.org/download/$jar" -OutFile "$env:GITHUB_WORKSPACE\$jar"
-          Write-Host "Downloaded $env:GITHUB_WORKSPACE\$jar"
+          $jarPath = Join-Path $env:GITHUB_WORKSPACE $jar
+          Invoke-WebRequest -Uri "https://www.antlr.org/download/$jar" -OutFile $jarPath
+          Write-Host "Downloaded $jarPath"
 
       - name: Configure (Debug)
         shell: pwsh
         run: |
+          $jarPath = Join-Path $env:GITHUB_WORKSPACE "antlr-4.13.2-complete.jar"
           cmake -S . -B build/ci-debug -G Ninja `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DANTLR_JAR="$env:GITHUB_WORKSPACE/antlr-4.13.2-complete.jar" `
+            -DANTLR_JAR="$jarPath" `
             -DCMAKE_BUILD_TYPE=Debug
 
       - name: Build
