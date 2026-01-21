@@ -1,4 +1,4 @@
-name: windows-msvc-ninja
+name: windows-msvc
 
 on:
   push:
@@ -11,9 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v4
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -40,23 +37,30 @@ jobs:
           Invoke-WebRequest -Uri "https://www.antlr.org/download/$jar" -OutFile $jarPath
           Write-Host "Downloaded $jarPath"
 
-      - name: Configure (Debug)
+      - name: Configure (Debug, VS generator)
         shell: pwsh
         run: |
           $jarPath = Join-Path $env:GITHUB_WORKSPACE "antlr-4.13.2-complete.jar"
           $toolchain = Join-Path $env:GITHUB_WORKSPACE "vcpkg\scripts\buildsystems\vcpkg.cmake"
-          cmake -S toy-choreo -B build/ci-debug -G Ninja `
+          cmake -S toy-choreo -B build/ci-debug `
+            -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="$toolchain" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DANTLR_JAR="$jarPath" `
-            -DCMAKE_BUILD_TYPE=Debug
+            -DANTLR_JAR="$jarPath"
 
-      - name: Build
+      - name: Build (Debug)
         shell: pwsh
         run: |
-          cmake --build build/ci-debug
+          cmake --build build/ci-debug --config Debug
 
-      - name: Test
+      - name: Test (ctest)
         shell: pwsh
         run: |
-          ctest --test-dir build/ci-debug --output-on-failure
+          ctest --test-dir build/ci-debug -C Debug --output-on-failure
+      - name: Dump vcpkg logs on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -ErrorAction SilentlyContinue vcpkg\buildtrees\antlr4 | Select-Object FullName
+          Write-Host "---- install-x64-windows-dbg-out.log ----"
+          Get-Content -ErrorAction SilentlyContinue vcpkg\buildtrees\antlr4\install-x64-windows-dbg-out.log -Tail 200
