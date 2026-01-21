@@ -1,0 +1,58 @@
+name: windows-msvc-ninja
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "d3f79b0d0cbd15a4c68dc8d2acb4b0d4a5c1f0c2"
+          # Se questo commit dovesse diventare vecchio in futuro, lo cambierai.
+          # È qui per stabilità e caching.
+
+      - name: Download ANTLR jar
+        shell: pwsh
+        run: |
+          $jar = "antlr-4.13.2-complete.jar"
+          Invoke-WebRequest -Uri "https://www.antlr.org/download/$jar" -OutFile "$env:GITHUB_WORKSPACE\$jar"
+          Write-Host "Downloaded $env:GITHUB_WORKSPACE\$jar"
+
+      - name: Configure (Debug)
+        shell: pwsh
+        run: |
+          cmake -S . -B build/ci-debug -G Ninja `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DANTLR_JAR="$env:GITHUB_WORKSPACE/antlr-4.13.2-complete.jar" `
+            -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build/ci-debug
+
+      - name: Test
+        shell: pwsh
+        run: |
+          ctest --test-dir build/ci-debug --output-on-failure
