@@ -1,0 +1,20 @@
+SINTASSI ASTRATTA (Toy Choreo - minimale)
+
+Tipi base:
+- Id : identificatore (stringa). Esempi: A, B, x, ping, r1, cond
+
+Struttura del linguaggio:
+
+Program ::= List<Stmt>
+
+Stmt ::= Send(from: Id, to: Id, msg: Id)
+       | Let(var: Id, rhs: Id)
+       | If(cond: Id, thenBranch: List<Stmt>, elseBranch: List<Stmt>)
+       | Race(raceId: Id, left: List<Stmt>, right: List<Stmt>)
+
+Intuizione:
+- Un Programma è una sequenza di statement.
+- Send rappresenta una comunicazione: un processo "from" invia un messaggio "msg" a "to".
+- Let rappresenta un assegnamento semplice: var = rhs (entrambi Id).
+- If rappresenta un condizionale con due blocchi di statement.
+- Race rappresenta una competizione tra due blocchi di statement, identificata da raceId.

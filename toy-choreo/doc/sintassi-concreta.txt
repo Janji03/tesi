@@ -1,0 +1,54 @@
+SINTASSI CONCRETA (Toy Choreo - testuale)
+
+Regole di scrittura:
+- Un file contiene una sequenza di statement.
+- Gli statement Let, Send, Race terminano con ';'.
+- I blocchi (then/else e rami della race) sono delimitati da '{' e '}'.
+- Gli spazi e le nuove linee sono liberi (non significativi), tranne che per separare token.
+
+Forme testuali degli statement:
+
+1) Let
+   let <var> = <rhs> ;
+
+   esempio:
+   let x = y;
+
+2) Send
+   send <from> -> <to> : <msg> ;
+
+   esempio:
+   send A -> B : ping;
+
+3) If
+   if ( <cond> ) { <stmt>* } else { <stmt>* }
+
+   esempio:
+   if (cond) {
+     send A -> B : ok;
+   } else {
+     let x = y;
+   }
+
+4) Race
+   race <raceId> { <stmt>* } or { <stmt>* } ;
+
+   esempio:
+   race r1 { send A -> B : left; } or { send A -> B : right; };
+
+Esempio di programma completo:
+
+let x = y;
+send A -> B : ping;
+
+race r1 {
+  send A -> B : left;
+} or {
+  send A -> B : right;
+};
+
+if (cond) {
+  let z = w;
+} else {
+  send B -> A : pong;
+}

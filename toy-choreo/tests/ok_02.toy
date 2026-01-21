@@ -1,0 +1,11 @@
+race r1 {
+  send A -> B : left;
+} or {
+  send A -> B : right;
+};
+
+if (cond) {
+  let z = w;
+} else {
+  send B -> A : pong;
+}

@@ -1,0 +1,18 @@
+program = { stmt } ;
+
+stmt = let_stmt
+     | send_stmt
+     | if_stmt
+     | race_stmt ;
+
+let_stmt  = "let" id "=" id ";" ;
+
+send_stmt = "send" id "->" id ":" id ";" ;
+
+if_stmt   = "if" "(" id ")" block "else" block ;
+
+race_stmt = "race" id block "or" block ";" ;
+
+block     = "{" { stmt } "}" ;
+
+id        = letter , { letter | digit | "_" } ;

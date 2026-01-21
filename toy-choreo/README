@@ -1,0 +1,68 @@
+# toy-choreo (ANTLR4 + C++)
+
+Progetto di test per imparare ANTLR4 in C++ su Windows (MSVC + CMake + vcpkg + VS Code).
+
+Il progetto:
+- definisce una grammatica ANTLR (`grammar/ToyChoreo.g4`)
+- genera automaticamente lexer/parser C++ in `generated/`
+- compila un eseguibile (`toy_choreo.exe`) che fa parsing e costruisce un AST minimale
+
+## Requisiti
+
+- Windows + Visual Studio (MSVC x64)
+- CMake (3.20+)
+- Ninja (consigliato)
+- Java (per eseguire ANTLR)
+- vcpkg installato in `C:\vcpkg` (o altro path, ma va indicato)
+
+## ANTLR jar
+
+Scarica `antlr-4.13.2-complete.jar` e tienilo in un percorso stabile, ad esempio:
+
+`C:\Users\<tuo_utente>\Downloads\antlr-4.13.2-complete.jar`
+
+Durante la configurazione CMake devi passare:
+
+`-DANTLR_JAR="C:\...\antlr-4.13.2-complete.jar"`
+
+> Nota: la cartella `generated/` NON è committata su git: viene rigenerata in fase di build.
+
+## Build (manuale)
+
+Da PowerShell nella root del progetto:
+
+```powershell
+cmake -S . -B build -G "Ninja" `
+  -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake `
+  -DVCPKG_TARGET_TRIPLET=x64-windows `
+  -DANTLR_JAR="C:\Users\<tuo_utente>\Downloads\antlr-4.13.2-complete.jar"
+
+cmake --build build
+Esecuzione
+
+Esempio con file validi:
+
+.\build\toy_choreo.exe .\tests\ok_01.toy
+.\build\toy_choreo.exe .\tests\ok_02.toy
+
+
+Esempio con file non valido:
+
+.\build\toy_choreo.exe .\tests\err_01.toy
+
+Struttura cartelle
+
+grammar/ : grammatica ANTLR (ToyChoreo.g4)
+
+generated/ : output generato da ANTLR (non committato)
+
+src/ : codice C++ (main, error listener, AST, builder, printer)
+
+tests/ : input di esempio per test
+
+
+---
+
+Se questo README ti va bene, nel prossimo step facciamo **CMakePresets.json** (così non devi più scrivere il comando lungo) e poi **CTest**.
+
+Dimmi solo: vuoi che nel README includiamo anche il comando “Debug/Release” oppure per ora lasciamo solo build unica come sopra?
