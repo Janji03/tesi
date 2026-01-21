@@ -39,7 +39,7 @@ jobs:
           Invoke-WebRequest -Uri "https://www.antlr.org/download/$jar" -OutFile $jarPath
           Write-Host "Downloaded $jarPath"
 
-      - name: Configure (Debug, VS generator)
+      - name: Configure (Debug, VS generator) + dump vcpkg logs on failure
         shell: pwsh
         run: |
           $jarPath = Join-Path $env:GITHUB_WORKSPACE "antlr-4.13.2-complete.jar"
@@ -51,6 +51,20 @@ jobs:
             -DVCPKG_TARGET_TRIPLET=x64-windows `
             -DANTLR_JAR="$jarPath"
 
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "===================="
+            Write-Host "CMake configure failed. Dumping vcpkg logs..."
+            Write-Host "===================="
+
+            Write-Host "---- vcpkg issue_body.md (tail) ----"
+            Get-Content -ErrorAction SilentlyContinue build/ci-debug/vcpkg_installed/vcpkg/issue_body.md -Tail 200
+
+            Write-Host "---- antlr4 install-x64-windows-dbg-out.log (tail) ----"
+            Get-Content -ErrorAction SilentlyContinue vcpkg/buildtrees/antlr4/install-x64-windows-dbg-out.log -Tail 200
+
+            exit 1
+          }
+
       - name: Build (Debug)
         shell: pwsh
         run: |
@@ -61,12 +75,13 @@ jobs:
         run: |
           ctest --test-dir build/ci-debug -C Debug --output-on-failure
 
-      - name: Dump vcpkg antlr4 logs on failure
-        if: failure()
-        shell: pwsh
-        run: |
-          Write-Host "---- vcpkg issue_body.md (tail) ----"
-          Get-Content -ErrorAction SilentlyContinue build/ci-debug/vcpkg_installed/vcpkg/issue_body.md -Tail 200
-
-          Write-Host "---- antlr4 install-x64-windows-dbg-out.log (tail) ----"
-          Get-Content -ErrorAction SilentlyContinue vcpkg/buildtrees/antlr4/install-x64-windows-dbg-out.log -Tail 200
+      - name: Upload vcpkg logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-logs
+          path: |
+            build/ci-debug/vcpkg_installed/vcpkg/issue_body.md
+            vcpkg/buildtrees/antlr4/install-x64-windows-dbg-out.log
+            build/ci-debug/vcpkg-manifest-install.log
+          if-no-files-found: ignore
